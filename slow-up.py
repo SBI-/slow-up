@@ -37,7 +37,7 @@ for option, argument in options:
         mode = argument
 
 factor = 1
-if mode == "slow":
+if mode == "fast":
     factor = -factor
 
 # regex for extracting times
