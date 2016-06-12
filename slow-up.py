@@ -2,7 +2,20 @@
 
 import getopt
 import re
+import sys
 from datetime import datetime
+from datetime import timedelta
+
+# handling parameters
+try:
+    options, arguments = getopt.getopt(sys.argv[1:], "o:h:m:s:f:")
+except getopt.GetoptError as err:
+    print("Illegal arguments")
+    print(err)
+    sys.exit(1)
+
+print(options)
+print(arguments)
 
 # bit about getting times
 pattern = "([0-9:,]+) --> ([0-9:,]+)"
@@ -25,11 +38,16 @@ for line in content:
         # turn strings into date times
         start_date = datetime.strptime(times.group(1), time_format)
         end_date = datetime.strptime(times.group(2), time_format)
+
         # adjust time using timedelta
+        delta = timedelta(hours = 0, minutes = 0, seconds = 0, microseconds = 500000)
+        start_edit = start_date + delta
+        end_edit = end_date + delta
 
         # convert date time back to strings
-        start_format = start_date.strftime(time_format)[:-3]
-        end_format = start_date.strftime(time_format)[:-3]
+        start_format = start_edit.strftime(time_format)[:-3]
+        end_format = end_edit.strftime(time_format)[:-3]
+
         # write strings in srt format
         out_file.write(start_format + " --> " + end_format + "\n")
     else:
