@@ -3,34 +3,68 @@
 import getopt
 import re
 import sys
+import os
 from datetime import datetime
 from datetime import timedelta
 
 # handling parameters
 try:
-    options, arguments = getopt.getopt(sys.argv[1:], "o:h:m:s:f:")
+    options, arguments = getopt.gnu_getopt(sys.argv[1:], "o:h:m:s:f:")
 except getopt.GetoptError as err:
     print("Illegal arguments")
     print(err)
     sys.exit(1)
 
-print(options)
-print(arguments)
+if len(arguments) < 1:
+    print("No input file, abort.")
+    sys.exit(1)
 
-# bit about getting times
+input_name = arguments[0]
+
+# get options passed
+mode = "fast"
+times = { "hours" : 0, "minutes" : 0, "seconds": 0, "microseconds": 0 }
+for option, argument in options:
+    if option == "-h":
+        times["hours"] = int(argument)
+    if option == "-m":
+        times["minutes"] = int(argument)
+    if option == "-s":
+        times["seconds"] = int(argument)
+    if option == "-f":
+        times["microseconds"] = int(argument)
+    if option == "-o":
+        mode = argument
+
+factor = 1
+if mode == "slow":
+    factor = -factor
+
+# regex for extracting times
 pattern = "([0-9:,]+) --> ([0-9:,]+)"
-text = "02:04:40,724 --> 02:04:41,724"
 matcher = re.compile(pattern)
 
 # reading files
-with open("../A.New.Hope.1977.Bluray.english.srt") as file:
+with open(input_name) as file:
     content = file.readlines()
 
+# chosing a file name with a default value
+if len(arguments) > 1:
+    output_name = arguments[1]
+else:
+    output_name = os.path.basename(input_name)[:-4] + "_slow-up.srt"
+
 # writing to file
-out_file = open("output", 'w')
+out_file = open(output_name, 'w')
 
 # extracting timestamps from each line
 time_format = "%H:%M:%S,%f"
+
+# creating delta with passed in options
+delta = timedelta(hours = times["hours"] * factor, 
+        minutes = times["minutes"] * factor, 
+        seconds = times["seconds"] * factor, 
+        microseconds = times["microseconds"] * factor)
 
 for line in content:
     times = matcher.match(line)
@@ -40,7 +74,6 @@ for line in content:
         end_date = datetime.strptime(times.group(2), time_format)
 
         # adjust time using timedelta
-        delta = timedelta(hours = 0, minutes = 0, seconds = 0, microseconds = 500000)
         start_edit = start_date + delta
         end_edit = end_date + delta
 
